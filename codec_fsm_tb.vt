@@ -1,0 +1,52 @@
+// synthesis translate_off
+`timescale 1ns / 1fs
+// synthesis translate_on
+
+module codec_fsm_tb;
+
+    reg xclk = 1'b0, reset = 1'b0;
+    reg aud_adcdat = 0;
+    reg signed [ 31:0 ] data_to_codec_l = 0, data_to_codec_r = 0;
+    wire signed [ 31:0 ] data_from_codec_r, data_from_codec_l;
+    wire ready, aud_xck, aud_dacdat, aud_adclrck, aud_daclrck, aud_bclk;
+
+    initial begin
+        data_to_codec_r <= $random;
+        data_to_codec_l <= $random;
+        reset <= 1'b0;
+        #100 reset <= 1'b1;
+        //aud_adcdat <= 1'b1;
+        //#10000 aud_adcdat <= 1'b0;
+        //#10000 aud_adcdat <= 1'b1;
+    end
+
+    always #41.6666666667 xclk = ~xclk;
+
+    codec_fsm #(
+        .OVERSAMPLE ( 250                   ),
+        .DATA_WIDTH ( 32                    ),
+        .CHANNELS   ( 2                     )
+    ) codec_fsm_inst (
+        .xclk_i     ( xclk                  ),
+        .reset_n    ( reset                 ),
+
+        .right_i    ( data_to_codec_r       ),
+        .left_i     ( data_to_codec_l       ),
+
+        .right_o    ( data_from_codec_r     ),
+        .left_o     ( data_from_codec_l     ),
+        .ready_o    ( ready                 ),
+
+        .xck_o      ( aud_xck               ),
+        .bclk_o     ( aud_bclk              ),
+        .daclrck_o  ( aud_daclrck           ),
+        .adclrck_o  ( aud_adclrck           ),
+        .adcdat_i   ( aud_dacdat            ),
+        .dacdat_o   ( aud_dacdat            )
+    );
+
+    initial begin
+        //#1_000_000 $stop;
+    end
+
+endmodule
